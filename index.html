@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1e293b">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Калькулятор">
+    <link rel="manifest" href="/manifest.json">
     <title>Калькулятор доборных элементов</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -56,8 +61,8 @@
             <span id="statusBadge" class="status-badge status-online">Online</span>
         </div>
         <div class="lang-switcher">
-            <button class="lang-btn active" onclick="setLang('kz', event)">KZ</button>
-            <button class="lang-btn" onclick="setLang('ru', event)">RU</button>
+            <button class="lang-btn" onclick="setLang('kz', event)">KZ</button>
+            <button class="lang-btn active" onclick="setLang('ru', event)">RU</button>
         </div>
     </div>
 
@@ -271,6 +276,26 @@
 
     window.addEventListener('online', function() { isOnline = true; updateOnlineStatus(); });
     window.addEventListener('offline', function() { isOnline = false; updateOnlineStatus(); });
+
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function() {
+            navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                console.log('ServiceWorker registered');
+                registration.addEventListener('updatefound', function() {
+                    var newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', function() {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            if (confirm('Доступна новая версия! Обновить сейчас?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            }).catch(function(err) {
+                console.log('ServiceWorker registration failed:', err);
+            });
+        });
+    }
 
     renderElements();
     updateOnlineStatus();
