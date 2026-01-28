@@ -255,84 +255,57 @@
     }
 
     function exportPDF() {
-        if (!window.jspdf || !window.jspdf.jsPDF) {
-            alert('PDF библиотека загружается... Попробуйте через несколько секунд или перезагрузите страницу.');
-            return;
+        var t = translations[currentLang];
+        var printWindow = window.open('', '_blank');
+        
+        var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+        html += '<title>Коммерческое предложение</title>';
+        html += '<style>';
+        html += 'body { font-family: Arial, sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; }';
+        html += 'h1 { text-align: center; margin-bottom: 30px; font-size: 24px; }';
+        html += 'p { margin-bottom: 20px; line-height: 1.6; text-align: justify; }';
+        html += 'table { width: 100%; border-collapse: collapse; margin-top: 30px; }';
+        html += 'th, td { border: 1px solid #000; padding: 10px; text-align: left; }';
+        html += 'th { background: #3b82f6; color: white; font-weight: bold; text-align: center; }';
+        html += 'td:first-child { text-align: center; }';
+        html += 'td:nth-child(3), td:nth-child(4), td:nth-child(5) { text-align: right; }';
+        html += 'tfoot td { font-weight: bold; background: #f0f0f0; }';
+        html += '@media print { body { padding: 20px; } }';
+        html += '</style></head><body>';
+        
+        html += '<h1>' + (currentLang === 'ru' ? 'КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ' : 'КОММЕРЦИЯЛЫҚ ҰСЫНЫС') + '</h1>';
+        html += '<p>Almaty-Iron Inc создаёт доборные элементы и металлоизделия на листогибочных станках для объектов, где важны точность, сроки и предсказуемый результат. Мы обеспечиваем высокий уровень исполнения, строгое соответствие проектной документации и промышленную дисциплину производства. С нами заказчики получают не просто поставщика, а технологического партнёра, отвечающего за результат.</p>';
+        
+        html += '<table><thead><tr>';
+        html += '<th>№</th>';
+        html += '<th>' + (currentLang === 'ru' ? 'Наименование' : 'Атауы') + '</th>';
+        html += '<th>' + (currentLang === 'ru' ? 'Кол-во, м.п.' : 'Саны, ш.м.') + '</th>';
+        html += '<th>' + (currentLang === 'ru' ? 'Цена за м.п.' : 'Бағасы ш.м.') + '</th>';
+        html += '<th>' + (currentLang === 'ru' ? 'Сумма, тг.' : 'Сома, тг.') + '</th>';
+        html += '</tr></thead><tbody>';
+        
+        var total = 0;
+        for (var i = 0; i < elements.length; i++) {
+            var calc = calculateElement(elements[i]);
+            total = total + calc.total;
+            html += '<tr>';
+            html += '<td>' + (i + 1) + '</td>';
+            html += '<td>' + t.element + ' ' + (i + 1) + '</td>';
+            html += '<td>' + (parseFloat(elements[i].quantity) || 0).toFixed(2) + '</td>';
+            html += '<td>' + calc.pricePerMeter.toFixed(2) + '</td>';
+            html += '<td>' + calc.total.toFixed(2) + '</td>';
+            html += '</tr>';
         }
-
-        try {
-            var doc = new window.jspdf.jsPDF();
-            var t = translations[currentLang];
-
-            doc.setFontSize(18);
-            doc.setFont('helvetica', 'bold');
-            var titleText = currentLang === 'ru' ? 'КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ' : 'КОММЕРЦИЯЛЫҚ ҰСЫНЫС';
-            doc.text(titleText, 105, 20, { align: 'center' });
-
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            var companyText = 'Almaty-Iron Inc создаёт доборные элементы и металлоизделия на листогибочных станках для объектов, где важны точность, сроки и предсказуемый результат. Мы обеспечиваем высокий уровень исполнения, строгое соответствие проектной документации и промышленную дисциплину производства. С нами заказчики получают не просто поставщика, а технологического партнёра, отвечающего за результат.';
-            var splitText = doc.splitTextToSize(companyText, 180);
-            doc.text(splitText, 15, 35);
-
-            var tableData = [];
-            var total = 0;
-
-            for (var i = 0; i < elements.length; i++) {
-                var calc = calculateElement(elements[i]);
-                total = total + calc.total;
-                var row = [
-                    String(i + 1),
-                    t.element + ' ' + String(i + 1),
-                    String((parseFloat(elements[i].quantity) || 0).toFixed(2)),
-                    String(calc.pricePerMeter.toFixed(2)),
-                    String(calc.total.toFixed(2))
-                ];
-                tableData.push(row);
-            }
-
-            var footerRow = [
-                { content: currentLang === 'ru' ? 'Итого:' : 'Барлығы:', colSpan: 4, styles: { fontStyle: 'bold', halign: 'right' } },
-                { content: String(total.toFixed(2)), styles: { fontStyle: 'bold' } }
-            ];
-            tableData.push(footerRow);
-
-            doc.autoTable({
-                startY: 70,
-                head: [[
-                    '№',
-                    currentLang === 'ru' ? 'Наименование' : 'Атауы',
-                    currentLang === 'ru' ? 'Кол-во, м.п.' : 'Саны, ш.м.',
-                    currentLang === 'ru' ? 'Цена за м.п.' : 'Бағасы ш.м.',
-                    currentLang === 'ru' ? 'Сумма, тг.' : 'Сома, тг.'
-                ]],
-                body: tableData,
-                theme: 'grid',
-                headStyles: {
-                    fillColor: [59, 130, 246],
-                    fontStyle: 'bold',
-                    halign: 'center',
-                    textColor: [255, 255, 255]
-                },
-                columnStyles: {
-                    0: { halign: 'center', cellWidth: 15 },
-                    1: { halign: 'left', cellWidth: 80 },
-                    2: { halign: 'center', cellWidth: 30 },
-                    3: { halign: 'right', cellWidth: 30 },
-                    4: { halign: 'right', cellWidth: 30 }
-                },
-                styles: {
-                    font: 'helvetica',
-                    fontSize: 10
-                }
-            });
-
-            var fileName = 'KP_Dobor_' + new Date().toISOString().split('T')[0] + '.pdf';
-            doc.save(fileName);
-        } catch (err) {
-            alert('Ошибка при создании PDF: ' + err.message + '. Убедитесь, что вы используете приложение с GitHub Pages.');
-            console.error('PDF Error:', err);
-        }
+        
+        html += '</tbody><tfoot><tr>';
+        html += '<td colspan="4" style="text-align: right;">' + (currentLang === 'ru' ? 'Итого:' : 'Барлығы:') + '</td>';
+        html += '<td>' + total.toFixed(2) + '</td>';
+        html += '</tr></tfoot></table>';
+        html += '<script>window.onload = function() { window.print(); }<\/script>';
+        html += '</body></html>';
+        
+        printWindow.document.write(html);
+        printWindow.document.close();
     }
 
     function renderElements() {
