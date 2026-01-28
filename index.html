@@ -9,6 +9,8 @@
     <meta name="apple-mobile-web-app-title" content="Калькулятор">
     <link rel="manifest" href="/manifest.json">
     <title>Калькулятор доборных элементов</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: Arial, sans-serif; background: #f1f5f9; padding-bottom: 120px; }
@@ -81,7 +83,7 @@
     <div class="footer">
         <div class="footer-content">
             <div class="footer-left">
-                <button class="btn btn-pdf" onclick="alert('PDF-экспорт будет работать после деплоя на GitHub Pages')" id="pdfBtn">Экспорт PDF</button>
+                <button class="btn btn-pdf" onclick="exportPDF()" id="pdfBtn">Экспорт PDF</button>
                 <button class="btn btn-reset" onclick="resetAll()" id="resetBtn">Сброс</button>
             </div>
             <div class="total-section">
@@ -250,6 +252,87 @@
         elements.push({id: 1, quantity: '', sides: ['', '']});
         nextId = 2;
         renderElements();
+    }
+
+    function exportPDF() {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            alert('PDF библиотека загружается... Попробуйте через несколько секунд или перезагрузите страницу.');
+            return;
+        }
+
+        try {
+            var doc = new window.jspdf.jsPDF();
+            var t = translations[currentLang];
+
+            doc.setFontSize(18);
+            doc.setFont('helvetica', 'bold');
+            var titleText = currentLang === 'ru' ? 'КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ' : 'КОММЕРЦИЯЛЫҚ ҰСЫНЫС';
+            doc.text(titleText, 105, 20, { align: 'center' });
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            var companyText = 'Almaty-Iron Inc создаёт доборные элементы и металлоизделия на листогибочных станках для объектов, где важны точность, сроки и предсказуемый результат. Мы обеспечиваем высокий уровень исполнения, строгое соответствие проектной документации и промышленную дисциплину производства. С нами заказчики получают не просто поставщика, а технологического партнёра, отвечающего за результат.';
+            var splitText = doc.splitTextToSize(companyText, 180);
+            doc.text(splitText, 15, 35);
+
+            var tableData = [];
+            var total = 0;
+
+            for (var i = 0; i < elements.length; i++) {
+                var calc = calculateElement(elements[i]);
+                total = total + calc.total;
+                var row = [
+                    String(i + 1),
+                    t.element + ' ' + String(i + 1),
+                    String((parseFloat(elements[i].quantity) || 0).toFixed(2)),
+                    String(calc.pricePerMeter.toFixed(2)),
+                    String(calc.total.toFixed(2))
+                ];
+                tableData.push(row);
+            }
+
+            var footerRow = [
+                { content: currentLang === 'ru' ? 'Итого:' : 'Барлығы:', colSpan: 4, styles: { fontStyle: 'bold', halign: 'right' } },
+                { content: String(total.toFixed(2)), styles: { fontStyle: 'bold' } }
+            ];
+            tableData.push(footerRow);
+
+            doc.autoTable({
+                startY: 70,
+                head: [[
+                    '№',
+                    currentLang === 'ru' ? 'Наименование' : 'Атауы',
+                    currentLang === 'ru' ? 'Кол-во, м.п.' : 'Саны, ш.м.',
+                    currentLang === 'ru' ? 'Цена за м.п.' : 'Бағасы ш.м.',
+                    currentLang === 'ru' ? 'Сумма, тг.' : 'Сома, тг.'
+                ]],
+                body: tableData,
+                theme: 'grid',
+                headStyles: {
+                    fillColor: [59, 130, 246],
+                    fontStyle: 'bold',
+                    halign: 'center',
+                    textColor: [255, 255, 255]
+                },
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 15 },
+                    1: { halign: 'left', cellWidth: 80 },
+                    2: { halign: 'center', cellWidth: 30 },
+                    3: { halign: 'right', cellWidth: 30 },
+                    4: { halign: 'right', cellWidth: 30 }
+                },
+                styles: {
+                    font: 'helvetica',
+                    fontSize: 10
+                }
+            });
+
+            var fileName = 'KP_Dobor_' + new Date().toISOString().split('T')[0] + '.pdf';
+            doc.save(fileName);
+        } catch (err) {
+            alert('Ошибка при создании PDF: ' + err.message + '. Убедитесь, что вы используете приложение с GitHub Pages.');
+            console.error('PDF Error:', err);
+        }
     }
 
     function renderElements() {
