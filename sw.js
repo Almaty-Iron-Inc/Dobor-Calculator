@@ -1,7 +1,7 @@
 var CACHE_NAME = 'dobor-calc-v1.0.0';
 var urlsToCache = [
-  '/',
-  '/index.html'
+  './',
+  './index.html'
 ];
 
 self.addEventListener('install', function(event) {
@@ -33,20 +33,24 @@ self.addEventListener('activate', function(event) {
 
 self.addEventListener('fetch', function(event) {
   event.respondWith(
-    fetch(event.request)
+    caches.match(event.request)
       .then(function(response) {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        if (response) {
           return response;
         }
-        var responseToCache = response.clone();
-        caches.open(CACHE_NAME)
-          .then(function(cache) {
-            cache.put(event.request, responseToCache);
-          });
-        return response;
-      })
-      .catch(function() {
-        return caches.match(event.request);
+        return fetch(event.request).then(
+          function(response) {
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+            var responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then(function(cache) {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          }
+        );
       })
   );
 });
