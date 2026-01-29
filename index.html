@@ -256,13 +256,15 @@
 
     function exportPDF() {
         var t = translations[currentLang];
-        var printWindow = window.open('', '_blank');
         
         var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">';
         html += '<title>Коммерческое предложение</title>';
         html += '<style>';
         html += 'body { font-family: Arial, sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; }';
-        html += 'h1 { text-align: center; margin-bottom: 30px; font-size: 24px; }';
+        html += '.back-btn { position: fixed; top: 10px; left: 10px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; z-index: 1000; }';
+        html += '.back-btn:hover { background: #2563eb; }';
+        html += 'h1 { text-align: center; margin-bottom: 30px; font-size: 24px; margin-top: 60px; }';
         html += 'p { margin-bottom: 20px; line-height: 1.6; text-align: justify; }';
         html += 'table { width: 100%; border-collapse: collapse; margin-top: 30px; }';
         html += 'th, td { border: 1px solid #000; padding: 10px; text-align: left; }';
@@ -270,9 +272,10 @@
         html += 'td:first-child { text-align: center; }';
         html += 'td:nth-child(3), td:nth-child(4), td:nth-child(5) { text-align: right; }';
         html += 'tfoot td { font-weight: bold; background: #f0f0f0; }';
-        html += '@media print { body { padding: 20px; } }';
+        html += '@media print { .back-btn { display: none; } body { padding: 20px; } h1 { margin-top: 0; } }';
         html += '</style></head><body>';
         
+        html += '<button class="back-btn" onclick="window.history.back()">← Назад</button>';
         html += '<h1>' + (currentLang === 'ru' ? 'КОММЕРЧЕСКОЕ ПРЕДЛОЖЕНИЕ' : 'КОММЕРЦИЯЛЫҚ ҰСЫНЫС') + '</h1>';
         html += '<p>Almaty-Iron Inc создаёт доборные элементы и металлоизделия на листогибочных станках для объектов, где важны точность, сроки и предсказуемый результат. Мы обеспечиваем высокий уровень исполнения, строгое соответствие проектной документации и промышленную дисциплину производства. С нами заказчики получают не просто поставщика, а технологического партнёра, отвечающего за результат.</p>';
         
@@ -301,11 +304,11 @@
         html += '<td colspan="4" style="text-align: right;">' + (currentLang === 'ru' ? 'Итого:' : 'Барлығы:') + '</td>';
         html += '<td>' + total.toFixed(2) + '</td>';
         html += '</tr></tfoot></table>';
-        html += '<script>window.onload = function() { window.print(); }<\/script>';
         html += '</body></html>';
         
-        printWindow.document.write(html);
-        printWindow.document.close();
+        var blob = new Blob([html], {type: 'text/html'});
+        var url = URL.createObjectURL(blob);
+        window.location.href = url;
     }
 
     function renderElements() {
