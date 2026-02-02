@@ -1,7 +1,7 @@
-var CACHE_NAME = 'dobor-calc-v1.0.3';
+var CACHE_NAME = 'dobor-calc-v2.0.0';
 var urlsToCache = [
-  './',
-  './index.html'
+  '/Dobor-Calculator/',
+  '/Dobor-Calculator/index.html'
 ];
 
 self.addEventListener('install', function(event) {
