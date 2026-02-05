@@ -1,0 +1,6 @@
+name = "my-pwa"
+compatibility_date = "2026-02-05"
+
+[site]
+bucket = "./"        # <- файлы лежат прямо в корне репо
+entry-point = "workers-site"
